@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net"
+	"strings"
 	"time"
 
 	didebaanpb "github.com/fzerorubigd/didebaan"
@@ -14,8 +15,6 @@ func main() {
 	var (
 		port    string
 		timeout time.Duration
-		command string
-		args    []string
 	)
 
 	pflag.StringVarP(&port, "port", "p", ":55055", "Port for GRPC listener")
@@ -23,11 +22,12 @@ func main() {
 
 	pflag.Parse()
 
-	args = pflag.Args()
-	if len(args) < 1 {
+	if len(pflag.Args()) < 1 {
 		log.Fatal("You should provide the command to execute")
 	}
-	command, args = args[0], args[1:]
+
+	all := strings.Join(pflag.Args(), " ")
+	args := strings.Split(all, " ")
 
 	var lc net.ListenConfig
 	lis, err := lc.Listen(cliContext(), "tcp", port)
@@ -36,7 +36,7 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	didebaanpb.RegisterTriggerServer(s, newServer(cliContext(), command, timeout, args...))
+	didebaanpb.RegisterTriggerServer(s, newServer(cliContext(), args[0], timeout, args[1:]...))
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
