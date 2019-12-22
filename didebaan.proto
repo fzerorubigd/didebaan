@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package didebaan;
+
+option go_package = "didebaanpb";
+option java_multiple_files = true;
+option java_outer_classname = "DidebaanProto";
+option java_package = "com.didebaan";
+
+service Trigger {
+  rpc Build(TriggerRequest) returns (TriggerResponse);
+}
+
+message TriggerRequest {
+  string reason = 1;
+}
+
+enum BuildStatus {
+  BUILD_STATUS_INVALID = 0;
+  BUILD_STATUS_ALREADY_STARTED = 1;
+  BUILD_STATUS_FAILED = 2;
+  BUILD_STATUS_SUCCESS = 3;
+}
+
+message TriggerResponse {
+  BuildStatus status = 1;
+  string message = 2;
+}

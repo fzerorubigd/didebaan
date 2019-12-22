@@ -1,0 +1,11 @@
+protoc:
+  version: 3.6.1
+
+generate:
+  go_options:
+    import_path: github.com/fzerorubigd/dideban
+  plugins:
+    - name: gogo
+      type: gogo
+      flags: plugins=grpc
+      output: .
