@@ -1,0 +1,9 @@
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+cmd/didebaan/didebaan
+cmd/didebaan-cli/didebaan-cli
