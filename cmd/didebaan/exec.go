@@ -105,7 +105,7 @@ func (p *process) terminate(ctx context.Context) {
 	// (This won't do anything if the process already died as the write will
 	// simply fail.)
 	p.tty.Write([]byte{3})
-
+	
 	timer := time.NewTimer(p.timeout)
 	sig := syscall.SIGINT
 	for {

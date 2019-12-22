@@ -21,7 +21,7 @@ func (s *server) Build(context.Context, *didebaanpb.TriggerRequest) (*didebaanpb
 	}
 
 	// The requset context is not used since it finishes with the request
-	err := s.p.start(Context())
+	err := s.p.start(cliContext())
 	if err != nil {
 		ret.Status = didebaanpb.BuildStatus_BUILD_STATUS_FAILED
 		ret.Message = err.Error()

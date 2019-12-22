@@ -30,13 +30,13 @@ func main() {
 	command, args = args[0], args[1:]
 
 	var lc net.ListenConfig
-	lis, err := lc.Listen(Context(), "tcp", port)
+	lis, err := lc.Listen(cliContext(), "tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	s := grpc.NewServer()
-	didebaanpb.RegisterTriggerServer(s, newServer(Context(), command, timeout, args...))
+	didebaanpb.RegisterTriggerServer(s, newServer(cliContext(), command, timeout, args...))
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -44,6 +44,6 @@ func main() {
 		}
 	}()
 
-	<-Context().Done()
+	<-cliContext().Done()
 	s.Stop()
 }
