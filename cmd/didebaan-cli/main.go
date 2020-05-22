@@ -16,6 +16,7 @@ func main() {
 	)
 	pflag.StringVarP(&address, "server", "s", "localhost:55055", "Server to use")
 
+	pflag.Parse()
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
