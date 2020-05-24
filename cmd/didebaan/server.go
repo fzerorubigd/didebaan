@@ -2,16 +2,21 @@ package main
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	didebaanpb "github.com/fzerorubigd/didebaan"
 )
 
 type server struct {
-	p *process
+	lock sync.Mutex
+	p    *process
 }
 
 func (s *server) Build(context.Context, *didebaanpb.TriggerRequest) (*didebaanpb.TriggerResponse, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	ret := &didebaanpb.TriggerResponse{
 		Status: didebaanpb.BuildStatus_BUILD_STATUS_INVALID,
 	}

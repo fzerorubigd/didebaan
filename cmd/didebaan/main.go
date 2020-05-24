@@ -1,15 +1,28 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net"
 	"strings"
+	"syscall"
 	"time"
 
+	"github.com/fzerorubigd/clictx"
 	didebaanpb "github.com/fzerorubigd/didebaan"
 	"github.com/ogier/pflag"
 	"google.golang.org/grpc"
 )
+
+func cliContext() context.Context {
+	return clictx.Context(
+		syscall.SIGKILL,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT,
+		syscall.SIGABRT,
+	)
+}
 
 func main() {
 	var (
@@ -26,17 +39,18 @@ func main() {
 		log.Fatal("You should provide the command to execute")
 	}
 
+	ctx := cliContext()
 	all := strings.Join(pflag.Args(), " ")
 	args := strings.Split(all, " ")
 
 	var lc net.ListenConfig
-	lis, err := lc.Listen(cliContext(), "tcp", port)
+	lis, err := lc.Listen(ctx, "tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	s := grpc.NewServer()
-	didebaanpb.RegisterTriggerServer(s, newServer(cliContext(), args[0], timeout, args[1:]...))
+	didebaanpb.RegisterTriggerServer(s, newServer(ctx, args[0], timeout, args[1:]...))
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -44,6 +58,6 @@ func main() {
 		}
 	}()
 
-	<-cliContext().Done()
+	<-ctx.Done()
 	s.Stop()
 }
