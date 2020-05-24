@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
 	"sync"
 	"syscall"
 	"time"
@@ -47,10 +48,14 @@ func (p *process) run(ctx context.Context) error {
 }
 
 func (p *process) start(ctx context.Context) error {
+	for p.isRunnig() {
+		runtime.Gosched()
+	}
 	ctx, p.cnl = context.WithCancel(ctx)
 
-	p.cmd = exec.CommandContext(ctx, p.command, p.args...)
-	fl, err := pty.Start(p.cmd)
+	cmd := exec.CommandContext(ctx, p.command, p.args...)
+	p.cmd = cmd
+	fl, err := pty.Start(cmd)
 	if err != nil {
 		return fmt.Errorf("failed to open the pty: %w", err)
 	}
@@ -77,7 +82,6 @@ func (p *process) start(ctx context.Context) error {
 		scanner := bufio.NewScanner(p.tty)
 		for scanner.Scan() {
 			fmt.Println(scanner.Text())
-			//stdout <- OutMsg{r.id, scanner.Text()}
 		}
 		// Intentionally ignoring scanner.Err() for now. Unfortunately,
 		// the pty returns a read error when the child dies naturally,
@@ -87,10 +91,9 @@ func (p *process) start(ctx context.Context) error {
 
 	p.setRunning(true)
 	go func() {
-		err := p.cmd.Wait()
+		err := cmd.Wait()
 		if !p.isKilled() && err != nil {
 			log.Printf("(error exit: %s)", err)
-			//stdout <- OutMsg{r.id, fmt.Sprintf("(error exit: %s)", err)}
 		}
 		p.cnl()
 		p.setRunning(false)
@@ -123,10 +126,10 @@ func (p *process) terminate(ctx context.Context) {
 			// whole pgroup in order to clean up any children the
 			// process may have created.
 			if err := syscall.Kill(-1*p.cmd.Process.Pid, sig); err != nil {
-				log.Printf("Error killing: %s", err)
 				if err.(syscall.Errno) == syscall.ESRCH { // no such process
 					return
 				}
+				log.Printf("Error killing: %s", err)
 			}
 			// After SIGINT doesn't do anything, try SIGKILL next.
 			timer.Reset(p.timeout)
@@ -184,6 +187,8 @@ func newProcess(ctx context.Context, command string, timeout time.Duration, args
 		timeout: timeout,
 	}
 
-	_ = p.run(ctx)
+	if err := p.run(ctx); err != nil {
+		log.Printf("(error, failed to run the process: %s)", err)
+	}
 	return p
 }
